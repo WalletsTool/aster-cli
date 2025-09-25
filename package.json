@@ -1,0 +1,35 @@
+{
+  "name": "aster-trading-cli",
+  "version": "1.0.0",
+  "description": "Simple CLI for automated Aster DEX trading with hedged positions",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node test/test.js"
+  },
+  "bin": {
+    "aster": "src/index.js"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "csv-parser": "^3.0.0",
+    "ethers": "^6.8.1",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "inquirer": "^9.2.11",
+    "node-cron": "^3.0.3",
+    "winston": "^3.11.0"
+  },
+  "keywords": [
+    "trading",
+    "crypto",
+    "aster",
+    "dex",
+    "hedging",
+    "automation"
+  ],
+  "author": "CLI Trader",
+  "license": "MIT"
+}

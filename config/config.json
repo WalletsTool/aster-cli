@@ -1,0 +1,74 @@
+{
+  "trading": {
+    "supportedCoins": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT"
+    ],
+    "positionSizeRange": {
+      "min": 20,
+      "max": 50
+    },
+    "leverage": 10,
+    "closeAfterMinutesRange": {
+      "min": 10,
+      "max": 30
+    },
+    "maxDelayMs": 10000,
+    "minDelayMs": 5000,
+    "maxGroups": 10,
+    "enableRiskManagement": true,
+    "maxTotalPositions": 50
+  },
+  "api": {
+    "baseUrl": "https://fapi.asterdex.com",
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 1000
+  },
+  "logging": {
+    "level": "info",
+    "enableFileLogging": true,
+    "enableConsoleLogging": true,
+    "logRotation": true,
+    "maxLogFiles": 7,
+    "maxLogSize": "10MB"
+  },
+  "database": {
+    "enablePersistence": true,
+    "autoBackup": true,
+    "backupInterval": 3600000,
+    "maxBackups": 24
+  },
+  "notifications": {
+    "enableSlack": false,
+    "enableTelegram": false,
+    "enableEmail": false,
+    "slackWebhook": "",
+    "telegramBotToken": "",
+    "telegramChatId": "",
+    "emailSmtp": {
+      "host": "",
+      "port": 587,
+      "secure": false,
+      "auth": {
+        "user": "",
+        "pass": ""
+      }
+    },
+    "emailTo": ""
+  },
+  "security": {
+    "encryptPrivateKeys": true,
+    "secretKey": "",
+    "sessionTimeout": 3600000,
+    "maxFailedAttempts": 5,
+    "lockoutDuration": 300000
+  },
+  "performance": {
+    "enableMetrics": true,
+    "metricsInterval": 60000,
+    "memoryThreshold": 524288000,
+    "cpuThreshold": 80
+  }
+}
