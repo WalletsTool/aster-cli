@@ -9,6 +9,7 @@ import TradingEngine from './engine/tradingEngine.js';
 import PnLTracker from './utils/pnlTracker.js';
 import ConfigManager from './utils/config.js';
 import Logger from './utils/logger.js';
+import { convertAllUSDTToUSDF, convertUSDTToUSDF } from './utils/mintUSDF.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
@@ -55,12 +56,12 @@ program
 const accountCmd = program.command('account').description('Account management commands');
 
 accountCmd
-    .command('load')
-    .description('Load accounts from CSV files')
-    .action(async () => {
+    .command('load [filePath]')
+    .description('Load accounts from CSV files (specify file path or load all from accounts folder)')
+    .action(async (filePath) => {
         const spinner = ora('Loading accounts...').start();
         try {
-            const accounts = await accountManager.loadAccounts();
+            const accounts = await accountManager.loadAccounts(filePath);
             spinner.succeed(`成功加载 ${accounts.length} 个账户`);
             
             const stats = accountManager.getAccountStats();
@@ -68,7 +69,11 @@ accountCmd
             Logger.info(`  Total Accounts: ${stats.total}`, '系统');
             Logger.info(`  Max Groups: ${stats.maxGroups}`, '系统');
 
-            Logger.info(`账户加载操作完成: ${accounts.length} 个账户`, '系统');
+            if (filePath) {
+                Logger.info(`从指定文件加载完成: ${filePath}`, '系统');
+            } else {
+                Logger.info(`账户加载操作完成: ${accounts.length} 个账户`, '系统');
+            }
         } catch (error) {
             spinner.fail('Failed to load accounts');
             Logger.error(error.message, '系统');
@@ -481,6 +486,151 @@ pnlCmd
                 Logger.error(error.message, '系统');
                 Logger.error(`清空盈亏错误: ${error.message}`, '系统');
             }
+        }
+    });
+
+// Mint Commands
+const mintCmd = program.command('mint').description('USDT to USDF conversion commands');
+
+mintCmd
+    .command('all')
+    .description('Convert all USDT in wallet to USDF')
+    .option('-a, --account <name>', 'Account name to use for minting')
+    .action(async (options) => {
+        const spinner = ora('准备转换 USDT 为 USDF...').start();
+        try {
+            // Load accounts if not already loaded
+            if (accountManager.getAccounts().length === 0) {
+                spinner.text = '加载账户...';
+                await accountManager.loadAccounts();
+            }
+
+            const accounts = accountManager.getAccounts();
+            if (accounts.length === 0) {
+                spinner.fail('未找到账户');
+                Logger.error('请先使用 "account load" 命令加载账户', '系统');
+                return;
+            }
+
+            let selectedAccount;
+            if (options.account) {
+                selectedAccount = accounts.find(acc => acc.accountName === options.account);
+                if (!selectedAccount) {
+                    spinner.fail('账户未找到');
+                    Logger.error(`未找到账户: ${options.account}`, '系统');
+                    Logger.info('可用账户:', '系统');
+                    accounts.forEach(acc => Logger.info(`  - ${acc.accountName}`, '系统'));
+                    return;
+                }
+            } else {
+                // Use first account if no specific account specified
+                selectedAccount = accounts[0];
+                Logger.info(`使用默认账户: ${selectedAccount.accountName}`, '系统');
+            }
+
+            // Check if account has private key (secretKey)
+            if (!selectedAccount.secretKey || selectedAccount.secretKey.includes('your_secret_key_here')) {
+                spinner.fail('账户私钥无效');
+                Logger.error(`账户 ${selectedAccount.accountName} 的私钥无效或未配置`, '系统');
+                Logger.info('请在 accounts/import.csv 中配置正确的私钥', '系统');
+                return;
+            }
+
+            spinner.text = `正在转换 ${selectedAccount.accountName} 的所有 USDT...`;
+            
+            const result = await convertAllUSDTToUSDF(selectedAccount.secretKey);
+            
+            if (result.success) {
+                spinner.succeed(`成功转换 ${result.convertedAmount} USDT 为 USDF`);
+                Logger.success(`✓ 转换完成`, '系统');
+                Logger.info(`  账户: ${selectedAccount.accountName}`, '系统');
+                Logger.info(`  转换数量: ${result.convertedAmount} USDT`, '系统');
+                Logger.info(`  交易哈希: ${result.txHash}`, '系统');
+                Logger.info(`  Gas 使用: ${result.gasUsed}`, '系统');
+                Logger.info(`  新 USDF 余额: ${result.newUSDFBalance} USDF`, '系统');
+            } else {
+                spinner.fail('转换失败');
+                Logger.error(`转换失败: ${result.error || result.message}`, '系统');
+            }
+            
+        } catch (error) {
+            spinner.fail('转换过程中出错');
+            Logger.error(`转换 USDT 为 USDF 时出错: ${error.message}`, '系统');
+        }
+    });
+
+mintCmd
+    .command('amount <amount>')
+    .description('Convert specific amount of USDT to USDF')
+    .option('-a, --account <name>', 'Account name to use for minting')
+    .action(async (amount, options) => {
+        const spinner = ora(`准备转换 ${amount} USDT 为 USDF...`).start();
+        try {
+            // Validate amount
+            const numAmount = parseFloat(amount);
+            if (isNaN(numAmount) || numAmount <= 0) {
+                spinner.fail('无效的数量');
+                Logger.error('请输入有效的 USDT 数量（大于 0 的数字）', '系统');
+                return;
+            }
+
+            // Load accounts if not already loaded
+            if (accountManager.getAccounts().length === 0) {
+                spinner.text = '加载账户...';
+                await accountManager.loadAccounts();
+            }
+
+            const accounts = accountManager.getAccounts();
+            if (accounts.length === 0) {
+                spinner.fail('未找到账户');
+                Logger.error('请先使用 "account load" 命令加载账户', '系统');
+                return;
+            }
+
+            let selectedAccount;
+            if (options.account) {
+                selectedAccount = accounts.find(acc => acc.accountName === options.account);
+                if (!selectedAccount) {
+                    spinner.fail('账户未找到');
+                    Logger.error(`未找到账户: ${options.account}`, '系统');
+                    Logger.info('可用账户:', '系统');
+                    accounts.forEach(acc => Logger.info(`  - ${acc.accountName}`, '系统'));
+                    return;
+                }
+            } else {
+                // Use first account if no specific account specified
+                selectedAccount = accounts[0];
+                Logger.info(`使用默认账户: ${selectedAccount.accountName}`, '系统');
+            }
+
+            // Check if account has private key (secretKey)
+            if (!selectedAccount.secretKey || selectedAccount.secretKey.includes('your_secret_key_here')) {
+                spinner.fail('账户私钥无效');
+                Logger.error(`账户 ${selectedAccount.accountName} 的私钥无效或未配置`, '系统');
+                Logger.info('请在 accounts/import.csv 中配置正确的私钥', '系统');
+                return;
+            }
+
+            spinner.text = `正在转换 ${numAmount} USDT...`;
+            
+            const result = await convertUSDTToUSDF(selectedAccount.secretKey, numAmount);
+            
+            if (result.success) {
+                spinner.succeed(`成功转换 ${result.convertedAmount} USDT 为 USDF`);
+                Logger.success(`✓ 转换完成`, '系统');
+                Logger.info(`  账户: ${selectedAccount.accountName}`, '系统');
+                Logger.info(`  转换数量: ${result.convertedAmount} USDT`, '系统');
+                Logger.info(`  交易哈希: ${result.txHash}`, '系统');
+                Logger.info(`  Gas 使用: ${result.gasUsed}`, '系统');
+                Logger.info(`  新 USDF 余额: ${result.newUSDFBalance} USDF`, '系统');
+            } else {
+                spinner.fail('转换失败');
+                Logger.error(`转换失败: ${result.error}`, '系统');
+            }
+            
+        } catch (error) {
+            spinner.fail('转换过程中出错');
+            Logger.error(`转换 USDT 为 USDF 时出错: ${error.message}`, '系统');
         }
     });
 

@@ -14,31 +14,50 @@ export class AccountManager {
     }
 
     /**
-     * Load all CSV files from accounts folder
+     * Load accounts from specified file or all CSV files from accounts folder
+     * @param {string} filePath - Optional specific file path to load
      */
-    async loadAccounts() {
-        Logger.info(`从以下路径加载账户: ${this.accountsPath}`, '系统');
-        
-        if (!fs.existsSync(this.accountsPath)) {
-            throw new Error(`未找到账户文件夹: ${this.accountsPath}`);
-        }
-
-        const files = fs.readdirSync(this.accountsPath);
-        const csvFiles = files.filter(file => path.extname(file).toLowerCase() === '.csv');
-        
-        Logger.info(`找到CSV文件: ${csvFiles.join(', ')}`, '系统');
-        
-        if (csvFiles.length === 0) {
-            throw new Error('在账户文件夹中未找到CSV文件');
-        }
-
+    async loadAccounts(filePath = null) {
         this.accounts = [];
         
-        for (const file of csvFiles) {
-            const filePath = path.join(this.accountsPath, file);
+        if (filePath) {
+            // Load from specific file
+            Logger.info(`从指定文件加载账户: ${filePath}`, '系统');
+            
+            if (!fs.existsSync(filePath)) {
+                throw new Error(`未找到指定文件: ${filePath}`);
+            }
+            
+            if (path.extname(filePath).toLowerCase() !== '.csv') {
+                throw new Error(`指定文件不是CSV格式: ${filePath}`);
+            }
+            
             const fileAccounts = await this.parseCSVFile(filePath);
-            Logger.info(`从 ${file} 加载了 ${fileAccounts.length} 个账户`, '系统');
+            Logger.info(`从指定文件加载了 ${fileAccounts.length} 个账户`, '系统');
             this.accounts.push(...fileAccounts);
+        } else {
+            // Load from accounts folder (original behavior)
+            Logger.info(`从以下路径加载账户: ${this.accountsPath}`, '系统');
+            
+            if (!fs.existsSync(this.accountsPath)) {
+                throw new Error(`未找到账户文件夹: ${this.accountsPath}`);
+            }
+
+            const files = fs.readdirSync(this.accountsPath);
+            const csvFiles = files.filter(file => path.extname(file).toLowerCase() === '.csv');
+            
+            Logger.info(`找到CSV文件: ${csvFiles.join(', ')}`, '系统');
+            
+            if (csvFiles.length === 0) {
+                throw new Error('在账户文件夹中未找到CSV文件');
+            }
+            
+            for (const file of csvFiles) {
+                const fullFilePath = path.join(this.accountsPath, file);
+                const fileAccounts = await this.parseCSVFile(fullFilePath);
+                Logger.info(`从 ${file} 加载了 ${fileAccounts.length} 个账户`, '系统');
+                this.accounts.push(...fileAccounts);
+            }
         }
 
         Logger.info(`总共加载账户数: ${this.accounts.length}`, '系统');

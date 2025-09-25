@@ -1,16 +1,35 @@
 {
-  "name": "aster-trading-cli",
-  "version": "1.0.0",
-  "description": "Simple CLI for automated Aster DEX trading with hedged positions",
+  "name": "@walletstool/aster-cli",
+  "version": "1.0.1",
+  "description": "Automated hedged position trading CLI for Aster DEX with multi-account management, P&L tracking, and risk management",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node test/test.js"
+    "test": "node test/test.js",
+    "prepublishOnly": "npm test"
   },
   "bin": {
     "aster": "src/index.js"
+  },
+  "files": [
+    "src/",
+    "config/",
+    "accounts/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WalletsTool/aster-cli.git"
+  },
+  "homepage": "https://github.com/WalletsTool/aster-cli#readme",
+  "bugs": {
+    "url": "https://github.com/WalletsTool/aster-cli/issues"
   },
   "dependencies": {
     "commander": "^11.1.0",
@@ -28,8 +47,12 @@
     "aster",
     "dex",
     "hedging",
-    "automation"
+    "automation",
+    "cli",
+    "defi",
+    "trading-bot",
+    "portfolio-management"
   ],
-  "author": "CLI Trader",
-  "license": "MIT"
+  "author": "walletstool <renmengkai@gmail.com>",
+  "license": "Apache-2.0"
 }
