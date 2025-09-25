@@ -59,11 +59,11 @@
    aster account template
    ```
 
-2. **编辑生成的模板** (`accounts/账号导入模板.csv`) 填入您的实际账户详情:
+2. **编辑生成的模板** (`accounts/import.csv`) 填入您的实际账户详情:
    ```csv
-   name,user,signer,privateKey,balance,enabled,maxLeverage,riskLevel
-   Account_1,0x1234...,0x5678...,0xabcd...,1000,true,10,medium
-   Account_2,0x2345...,0x6789...,0xbcde...,1500,true,15,high
+   accountName,exchange,apiKey,secretKey,proxyUrl
+   Account_001,Aster,your_api_key_here,your_secret_key_here,
+   Account_002,Aster,your_api_key_here,your_secret_key_here,
    ```
 
 3. **加载您的账户**:
