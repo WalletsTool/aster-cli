@@ -8,7 +8,8 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "test": "node test/test.js",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test",
+    "publish": "npm publish --access public"
   },
   "bin": {
     "aster": "src/index.js"
